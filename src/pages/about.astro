@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../site.config';
+---
+
+<Base title="About and How We Review" description={`Who runs ${SITE.name}, how tools are selected and reviewed, and how the site makes money.`}>
+  <Breadcrumbs items={[{ name: 'About', href: '/about/' }]} />
+  <article class="prose">
+    <h1>About {SITE.name}</h1>
+    <p>
+      {SITE.name} is an independent directory of AI tools. The goal is simple: help you decide quickly whether a tool is
+      worth your time, and point you to a better fit when it is not.
+    </p>
+    <h2>How we review</h2>
+    <ul>
+      <li>Every listing states what the tool is for, what it costs and who it suits, in plain language.</li>
+      <li>Every listing includes real drawbacks. If we cannot name a weakness, we do not understand the tool yet.</li>
+      <li>We do not publish star ratings or user reviews we cannot verify.</li>
+      <li>Each page shows when it was last updated. Pricing changes often, so always confirm on the vendor's site.</li>
+    </ul>
+    <h2>How we make money</h2>
+    <p>
+      The site is funded by advertising and affiliate commissions. Commissions never decide whether a tool is listed or
+      what we say about it. Details are in our <a href="/affiliate-disclosure/">affiliate disclosure</a>.
+    </p>
+    <h2>Contact</h2>
+    <p>Corrections and tool suggestions are welcome. <!-- TODO: add your contact email --></p>
+  </article>
+</Base>

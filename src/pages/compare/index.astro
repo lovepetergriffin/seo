@@ -1,0 +1,28 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getComparisons } from '../../lib/content';
+
+const comparisons = await getComparisons();
+---
+
+<Base
+  title="AI Tool Comparisons: Side-by-Side Reviews"
+  description="Head-to-head comparisons of popular AI tools, with a clear verdict on which one fits which kind of user."
+>
+  <Breadcrumbs items={[{ name: 'Compare', href: '/compare/' }]} />
+  <h1>AI tool comparisons</h1>
+  <p class="muted">Two tools, one table and a straight answer on which to pick.</p>
+  <div class="cat-grid" style="margin-top:20px">
+    {
+      comparisons.map(({ entry, a, b }) => (
+        <a class="cat" href={`/compare/${entry.id}/`}>
+          <strong>
+            {a.data.name} vs {b.data.name}
+          </strong>
+          <span>{entry.data.description}</span>
+        </a>
+      ))
+    }
+  </div>
+</Base>

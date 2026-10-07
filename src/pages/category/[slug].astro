@@ -1,0 +1,75 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { CATEGORIES } from '../../data/categories';
+import { getTools } from '../../lib/content';
+
+export function getStaticPaths() {
+  return CATEGORIES.map((cat) => ({ params: { slug: cat.slug }, props: { cat } }));
+}
+
+const { cat } = Astro.props;
+const tools = (await getTools()).filter((t) => t.data.category === cat.slug);
+const year = new Date().getFullYear();
+const others = CATEGORIES.filter((c) => c.slug !== cat.slug);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: cat.name,
+  description: cat.description,
+  mainEntity: {
+    '@type': 'ItemList',
+    itemListElement: tools.map((t, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: t.data.name,
+      url: new URL(`/tools/${t.id}/`, Astro.site).href,
+    })),
+  },
+};
+---
+
+<Base
+  title={`Best ${cat.name} in ${year}`}
+  description={`${cat.description} Compare ${tools.length} options by features, pricing, pros and cons.`}
+  jsonLd={jsonLd}
+>
+  <Breadcrumbs items={[{ name: cat.name, href: `/category/${cat.slug}/` }]} />
+  <h1>Best {cat.name} ({year})</h1>
+  <p class="prose muted">{cat.intro}</p>
+
+  <div class="grid" style="margin-top:24px">
+    {tools.map((tool) => <ToolCard tool={tool} heading="h2" />)}
+  </div>
+
+  <AdSlot />
+
+  <h2>How the {cat.short.toLowerCase()} tools compare</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Tool</th><th>Pricing</th><th>Starting price</th><th>Best for</th></tr>
+      </thead>
+      <tbody>
+        {
+          tools.map((t) => (
+            <tr>
+              <td><a href={`/tools/${t.id}/`}>{t.data.name}</a></td>
+              <td>{t.data.pricing}</td>
+              <td>{t.data.startingPrice ?? '—'}</td>
+              <td>{t.data.bestFor}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Other categories</h2>
+  <div class="chips">
+    {others.map((c) => <a class="badge plain" href={`/category/${c.slug}/`}>{c.name}</a>)}
+  </div>
+</Base>

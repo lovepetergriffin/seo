@@ -1,0 +1,60 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { SITE } from '../../site.config';
+import { getPosts, formatDate } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post, posts } }));
+}
+
+const { post, posts } = Astro.props;
+const { Content } = await render(post);
+const modified = post.data.updated ?? post.data.pubDate;
+const more = posts.filter((p) => p.id !== post.id).slice(0, 3);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.pubDate.toISOString(),
+  dateModified: modified.toISOString(),
+  author: { '@type': 'Organization', name: SITE.author },
+  publisher: { '@type': 'Organization', name: SITE.name },
+  mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).href,
+};
+---
+
+<Base title={post.data.title} description={post.data.description} type="article" jsonLd={jsonLd}>
+  <Breadcrumbs
+    items={[
+      { name: 'Blog', href: '/blog/' },
+      { name: post.data.title, href: `/blog/${post.id}/` },
+    ]}
+  />
+  <article class="prose">
+    <h1>{post.data.title}</h1>
+    <p class="muted small">
+      By {SITE.author} · <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+      {post.data.updated && <> · Updated {formatDate(post.data.updated)}</>}
+    </p>
+    <Content />
+  </article>
+
+  <AdSlot />
+
+  {
+    more.length > 0 && (
+      <>
+        <h2>Keep reading</h2>
+        <ul class="link-list">
+          {more.map((p) => <li><a href={`/blog/${p.id}/`}>{p.data.title}</a></li>)}
+        </ul>
+      </>
+    )
+  }
+</Base>

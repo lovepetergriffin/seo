@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../site.config';
+---
+
+<Base title="Privacy Policy" description={`What data ${SITE.name} collects and how it is used.`}>
+  <Breadcrumbs items={[{ name: 'Privacy policy', href: '/privacy/' }]} />
+  <article class="prose">
+    <h1>Privacy policy</h1>
+    <!-- TODO: template only. Have this reviewed against the laws that apply to you (GDPR, CCPA) before launch. -->
+    <p>{SITE.name} does not require an account and does not collect personal information directly.</p>
+    <h2>Analytics</h2>
+    <p>
+      We may use Google Analytics to understand which pages are useful. It collects usage data such as pages visited,
+      approximate location and device type.
+    </p>
+    <h2>Advertising</h2>
+    <p>
+      Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this and other
+      websites. You can opt out of personalised advertising in
+      <a href="https://www.google.com/settings/ads" rel="noopener">Google Ads Settings</a>.
+    </p>
+    <h2>Affiliate links</h2>
+    <p>
+      When you follow an affiliate link, the destination site may set a cookie to attribute a purchase to us. See our
+      <a href="/affiliate-disclosure/">affiliate disclosure</a>.
+    </p>
+  </article>
+</Base>

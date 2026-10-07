@@ -1,0 +1,161 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import Faq from '../../components/Faq.astro';
+import { SITE } from '../../site.config';
+import { getCategory } from '../../data/categories';
+import {
+  getTools,
+  getComparisons,
+  alternativesFor,
+  outbound,
+  formatDate,
+  MIN_ALTERNATIVES,
+  type Tool,
+} from '../../lib/content';
+
+export async function getStaticPaths() {
+  const tools = await getTools();
+  return tools.map((tool) => ({ params: { slug: tool.id }, props: { tool } }));
+}
+
+const { tool } = Astro.props as { tool: Tool };
+const d = tool.data;
+const cat = getCategory(d.category);
+const { Content } = await render(tool);
+const link = outbound(tool);
+
+const alternatives = alternativesFor(tool, await getTools());
+const hasAltPage = alternatives.length >= MIN_ALTERNATIVES;
+const comparisons = (await getComparisons()).filter(({ a, b }) => a.id === tool.id || b.id === tool.id);
+
+const year = d.updated.getUTCFullYear();
+const title = `${d.name} Review (${year}): Features, Pricing, Pros & Cons`;
+const description = `${d.tagline}. See what ${d.name} does well, where it falls short, what it costs and the best alternatives.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: d.name,
+  description: d.description,
+  applicationCategory: cat.name,
+  operatingSystem: 'Web',
+  url: d.url,
+  dateModified: d.updated.toISOString(),
+};
+---
+
+<Base title={title} description={description} type="article" jsonLd={jsonLd}>
+  <Breadcrumbs
+    items={[
+      { name: cat.name, href: `/category/${cat.slug}/` },
+      { name: d.name, href: `/tools/${tool.id}/` },
+    ]}
+  />
+
+  <header class="tool-head">
+    <span class="avatar lg" aria-hidden="true">{d.name[0]}</span>
+    <div>
+      <h1>{d.name}</h1>
+      <p class="muted">{d.tagline}</p>
+      <span class="badge">{d.pricing}</span>
+      <a class="badge plain" href={`/category/${cat.slug}/`}>{cat.short}</a>
+    </div>
+    <div class="cta">
+      <a class="btn" href={link.href} rel={link.rel} target="_blank">Visit {d.name} ↗</a>
+      {link.isAffiliate && <p class="disclosure">Affiliate link — we may earn a commission.</p>}
+    </div>
+  </header>
+
+  <div class="layout">
+    <div>
+      <h2>What is {d.name}?</h2>
+      <p>{d.description}</p>
+      <div class="prose"><Content /></div>
+
+      <h2>Key features</h2>
+      <ul>
+        {d.features.map((f) => <li>{f}</li>)}
+      </ul>
+
+      <AdSlot />
+
+      <h2>{d.name} pros and cons</h2>
+      <div class="pros-cons">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul class="pros">{d.pros.map((p) => <li>{p}</li>)}</ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul class="cons">{d.cons.map((c) => <li>{c}</li>)}</ul>
+        </div>
+      </div>
+
+      <h2>{d.name} pricing</h2>
+      <p>
+        {d.name} is <strong>{d.pricing.toLowerCase()}</strong>{d.startingPrice ? ` — ${d.startingPrice}` : ''}. Plans
+        and limits change often, so confirm current pricing on the
+        <a href={link.href} rel={link.rel} target="_blank">official {d.name} site</a> before you buy.
+      </p>
+
+      <h2>Who is {d.name} best for?</h2>
+      <p>{d.bestFor}</p>
+
+      <Faq items={d.faq} />
+
+      {
+        alternatives.length > 0 && (
+          <>
+            <div class="section-head">
+              <h2>{d.name} alternatives</h2>
+              {hasAltPage && <a href={`/alternatives/${tool.id}/`}>Compare all alternatives →</a>}
+            </div>
+            <div class="grid">
+              {alternatives.slice(0, 3).map((alt) => (
+                <ToolCard tool={alt} />
+              ))}
+            </div>
+          </>
+        )
+      }
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Quick facts</h2>
+        <dl class="facts">
+          <div><dt>Pricing</dt><dd>{d.pricing}</dd></div>
+          {d.startingPrice && <div><dt>Starting price</dt><dd>{d.startingPrice}</dd></div>}
+          <div><dt>Category</dt><dd><a href={`/category/${cat.slug}/`}>{cat.short}</a></dd></div>
+          <div><dt>Last updated</dt><dd><time datetime={d.updated.toISOString()}>{formatDate(d.updated)}</time></dd></div>
+        </dl>
+        <p style="margin:16px 0 0">
+          <a class="btn" href={link.href} rel={link.rel} target="_blank">Try {d.name} ↗</a>
+        </p>
+      </div>
+
+      {
+        comparisons.length > 0 && (
+          <div class="panel">
+            <h2>Compare {d.name}</h2>
+            <ul class="link-list">
+              {comparisons.map(({ entry, a, b }) => (
+                <li>
+                  <a href={`/compare/${entry.id}/`}>
+                    {a.data.name} vs {b.data.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+      <AdSlot format="rectangle" />
+      <p class="small muted">Reviewed by {SITE.author}.</p>
+    </aside>
+  </div>
+</Base>

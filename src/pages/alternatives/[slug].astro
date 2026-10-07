@@ -1,0 +1,91 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getCategory } from '../../data/categories';
+import { getTools, alternativesFor, outbound, MIN_ALTERNATIVES, type Tool } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const tools = await getTools();
+  return tools
+    .map((tool) => ({ tool, alternatives: alternativesFor(tool, tools) }))
+    .filter(({ alternatives }) => alternatives.length >= MIN_ALTERNATIVES)
+    .map(({ tool, alternatives }) => ({ params: { slug: tool.id }, props: { tool, alternatives } }));
+}
+
+const { tool, alternatives } = Astro.props as { tool: Tool; alternatives: Tool[] };
+const name = tool.data.name;
+const cat = getCategory(tool.data.category);
+const year = new Date().getFullYear();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: `${name} alternatives`,
+  itemListElement: alternatives.map((t, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: t.data.name,
+    url: new URL(`/tools/${t.id}/`, Astro.site).href,
+  })),
+};
+---
+
+<Base
+  title={`${alternatives.length} Best ${name} Alternatives in ${year}`}
+  description={`Looking for a ${name} alternative? Compare ${alternatives.map((t) => t.data.name).join(', ')} on pricing, strengths and who each one suits.`}
+  jsonLd={jsonLd}
+>
+  <Breadcrumbs
+    items={[
+      { name: cat.name, href: `/category/${cat.slug}/` },
+      { name, href: `/tools/${tool.id}/` },
+      { name: 'Alternatives', href: `/alternatives/${tool.id}/` },
+    ]}
+  />
+  <h1>Best {name} alternatives ({year})</h1>
+  <p class="prose">
+    <strong><a href={`/tools/${tool.id}/`}>{name}</a> is best for:</strong>{' '}
+    {tool.data.bestFor}
+  </p>
+  <p class="prose">The most common reasons to look for an alternative:</p>
+  <ul class="prose">
+    {tool.data.cons.map((c) => <li>{c}</li>)}
+  </ul>
+
+  {
+    alternatives.map((alt, i) => {
+      const link = outbound(alt);
+      return (
+        <section>
+          <h2>
+            {i + 1}. <a href={`/tools/${alt.id}/`}>{alt.data.name}</a>
+          </h2>
+          <p>
+            <span class="badge">{alt.data.pricing}</span>
+            {alt.data.startingPrice && <span class="badge plain">{alt.data.startingPrice}</span>}
+          </p>
+          <p class="prose">{alt.data.description}</p>
+          <p class="prose">
+            <strong>Best for:</strong> {alt.data.bestFor}
+          </p>
+          <div class="pros-cons">
+            <div class="panel">
+              <h3>Why choose it over {name}</h3>
+              <ul class="pros">{alt.data.pros.map((p) => <li>{p}</li>)}</ul>
+            </div>
+            <div class="panel">
+              <h3>Watch out for</h3>
+              <ul class="cons">{alt.data.cons.map((c) => <li>{c}</li>)}</ul>
+            </div>
+          </div>
+          <p style="margin-top:16px">
+            <a class="btn" href={link.href} rel={link.rel} target="_blank">Visit {alt.data.name} ↗</a>
+            <a class="btn ghost" href={`/tools/${alt.id}/`}>Read the full review</a>
+          </p>
+          {i === 0 && <AdSlot />}
+        </section>
+      );
+    })
+  }
+</Base>

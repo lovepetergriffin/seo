@@ -1,0 +1,30 @@
+---
+import type { Tool } from '../lib/content';
+import { getCategory } from '../data/categories';
+
+interface Props {
+  tool: Tool;
+  heading?: 'h2' | 'h3';
+}
+const { tool, heading: Heading = 'h3' } = Astro.props;
+const { name, tagline, pricing, category, tags } = tool.data;
+const cat = getCategory(category);
+---
+
+<article
+  class="card"
+  data-tool
+  data-category={category}
+  data-pricing={pricing}
+  data-search={[name, tagline, cat.name, ...tags].join(' ').toLowerCase()}
+>
+  <div class="card-top">
+    <span class="avatar" aria-hidden="true">{name[0]}</span>
+    <Heading><a href={`/tools/${tool.id}/`}>{name}</a></Heading>
+  </div>
+  <p>{tagline}</p>
+  <div class="card-meta">
+    <span class="badge">{pricing}</span>
+    <span class="badge plain">{cat.short}</span>
+  </div>
+</article>

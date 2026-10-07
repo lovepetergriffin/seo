@@ -1,0 +1,25 @@
+---
+import { breadcrumbLd } from '../lib/content';
+
+interface Props {
+  items: { name: string; href: string }[];
+}
+const items = [{ name: 'Home', href: '/' }, ...Astro.props.items];
+---
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <ol>
+    {
+      items.map((item, i) =>
+        i === items.length - 1 ? (
+          <li aria-current="page">{item.name}</li>
+        ) : (
+          <li>
+            <a href={item.href}>{item.name}</a>
+          </li>
+        ),
+      )
+    }
+  </ol>
+</nav>
+<script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbLd(Astro.site, items))} />

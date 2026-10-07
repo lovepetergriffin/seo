@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getPosts, formatDate } from '../../lib/content';
+
+const posts = await getPosts();
+---
+
+<Base
+  title="Blog: AI Guides, Tutorials and Buying Advice"
+  description="Practical guides to choosing and using AI tools: buying checklists, prompt techniques and roundups."
+>
+  <Breadcrumbs items={[{ name: 'Blog', href: '/blog/' }]} />
+  <h1>Blog</h1>
+  <ul class="post-list" style="margin-top:24px">
+    {
+      posts.map((post) => (
+        <li>
+          <h2><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
+          <p class="muted small">{formatDate(post.data.pubDate)}</p>
+          <p class="muted">{post.data.description}</p>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

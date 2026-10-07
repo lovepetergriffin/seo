@@ -1,0 +1,77 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import { CATEGORIES } from '../../data/categories';
+import { getTools } from '../../lib/content';
+
+const tools = await getTools();
+const pricings = [...new Set(tools.map((t) => t.data.pricing))].sort();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  itemListElement: tools.map((t, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: t.data.name,
+    url: new URL(`/tools/${t.id}/`, Astro.site).href,
+  })),
+};
+---
+
+<Base
+  title="All AI Tools: Searchable Directory"
+  description={`Browse and filter ${tools.length} AI tools by category and pricing. Each listing covers features, pros and cons, pricing and alternatives.`}
+  jsonLd={jsonLd}
+>
+  <Breadcrumbs items={[{ name: 'All tools', href: '/tools/' }]} />
+  <h1>All AI tools</h1>
+  <p class="muted">Filter {tools.length} tools by keyword, category or pricing model.</p>
+
+  <div class="filters">
+    <label class="sr-only" for="f-q">Search</label>
+    <input id="f-q" type="search" placeholder="Search by name or use case" />
+    <label class="sr-only" for="f-cat">Category</label>
+    <select id="f-cat">
+      <option value="">All categories</option>
+      {CATEGORIES.map((c) => <option value={c.slug}>{c.name}</option>)}
+    </select>
+    <label class="sr-only" for="f-price">Pricing</label>
+    <select id="f-price">
+      <option value="">Any pricing</option>
+      {pricings.map((p) => <option value={p}>{p}</option>)}
+    </select>
+  </div>
+
+  <div class="grid" id="tool-grid">
+    {tools.map((tool) => <ToolCard tool={tool} heading="h2" />)}
+  </div>
+  <p id="empty" class="muted" hidden>No tools match those filters.</p>
+</Base>
+
+<script>
+  const q = document.querySelector<HTMLInputElement>('#f-q')!;
+  const cat = document.querySelector<HTMLSelectElement>('#f-cat')!;
+  const price = document.querySelector<HTMLSelectElement>('#f-price')!;
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-tool]')];
+  const empty = document.querySelector<HTMLElement>('#empty')!;
+
+  const apply = () => {
+    const terms = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const card of cards) {
+      const match =
+        terms.every((t) => card.dataset.search!.includes(t)) &&
+        (!cat.value || card.dataset.category === cat.value) &&
+        (!price.value || card.dataset.pricing === price.value);
+      card.hidden = !match;
+      if (match) shown++;
+    }
+    empty.hidden = shown > 0;
+  };
+
+  q.value = new URLSearchParams(location.search).get('q') ?? '';
+  for (const el of [q, cat, price]) el.addEventListener('input', apply);
+  apply();
+</script>

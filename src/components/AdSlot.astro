@@ -1,0 +1,35 @@
+---
+// Renders an AdSense unit when PUBLIC_ADSENSE_CLIENT is set. Without it: a dashed
+// placeholder in dev (so you can see placements) and nothing at all in production.
+import { SITE } from '../site.config';
+
+interface Props {
+  slotId?: string;
+  format?: string;
+}
+const { slotId = '', format = 'auto' } = Astro.props;
+const live = Boolean(SITE.adsenseClient);
+---
+
+{
+  live ? (
+    <div class="ad">
+      <span class="ad-label">Advertisement</span>
+      <ins
+        class="adsbygoogle"
+        style="display:block"
+        data-ad-client={SITE.adsenseClient}
+        data-ad-slot={slotId || undefined}
+        data-ad-format={format}
+        data-full-width-responsive="true"
+      />
+      <script is:inline>
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  ) : import.meta.env.DEV ? (
+    <div class="ad">
+      <div class="ad-placeholder">Ad slot — set PUBLIC_ADSENSE_CLIENT to activate</div>
+    </div>
+  ) : null
+}

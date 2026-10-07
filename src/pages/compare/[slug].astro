@@ -1,0 +1,87 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import Faq from '../../components/Faq.astro';
+import { SITE } from '../../site.config';
+import { getComparisons, outbound, formatDate } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const comparisons = await getComparisons();
+  return comparisons.map((c) => ({ params: { slug: c.entry.id }, props: c }));
+}
+
+const { entry, a, b } = Astro.props;
+const { Content } = await render(entry);
+const pair = [a, b];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: entry.data.title,
+  description: entry.data.description,
+  dateModified: entry.data.updated.toISOString(),
+  author: { '@type': 'Organization', name: SITE.author },
+  publisher: { '@type': 'Organization', name: SITE.name },
+};
+---
+
+<Base title={entry.data.title} description={entry.data.description} type="article" jsonLd={jsonLd}>
+  <Breadcrumbs
+    items={[
+      { name: 'Compare', href: '/compare/' },
+      { name: `${a.data.name} vs ${b.data.name}`, href: `/compare/${entry.id}/` },
+    ]}
+  />
+  <h1>{entry.data.title}</h1>
+  <p class="muted small">Updated <time datetime={entry.data.updated.toISOString()}>{formatDate(entry.data.updated)}</time></p>
+
+  <div class="verdict">
+    <p><strong>Short answer:</strong> {entry.data.verdict}</p>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th><span class="sr-only">Criteria</span></th>
+          {pair.map((t) => <th><a href={`/tools/${t.id}/`}>{t.data.name}</a></th>)}
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th>Summary</th>{pair.map((t) => <td>{t.data.tagline}</td>)}</tr>
+        <tr><th>Pricing model</th>{pair.map((t) => <td>{t.data.pricing}</td>)}</tr>
+        <tr><th>Starting price</th>{pair.map((t) => <td>{t.data.startingPrice ?? '—'}</td>)}</tr>
+        <tr><th>Best for</th>{pair.map((t) => <td>{t.data.bestFor}</td>)}</tr>
+        <tr><th>Key features</th>{pair.map((t) => <td><ul>{t.data.features.map((f) => <li>{f}</li>)}</ul></td>)}</tr>
+        <tr><th>Strengths</th>{pair.map((t) => <td><ul>{t.data.pros.map((f) => <li>{f}</li>)}</ul></td>)}</tr>
+        <tr><th>Weaknesses</th>{pair.map((t) => <td><ul>{t.data.cons.map((f) => <li>{f}</li>)}</ul></td>)}</tr>
+        <tr>
+          <th><span class="sr-only">Links</span></th>
+          {
+            pair.map((t) => {
+              const link = outbound(t);
+              return (
+                <td>
+                  <a class="btn" href={link.href} rel={link.rel} target="_blank">Try {t.data.name} ↗</a>
+                </td>
+              );
+            })
+          }
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <AdSlot />
+
+  <div class="prose"><Content /></div>
+
+  <Faq items={entry.data.faq} />
+
+  <h2>Read the full reviews</h2>
+  <ul class="link-list">
+    {pair.map((t) => <li><a href={`/tools/${t.id}/`}>{t.data.name} review: features, pricing, pros and cons</a></li>)}
+  </ul>
+</Base>

@@ -1,0 +1,22 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../site.config';
+---
+
+<Base title="Affiliate Disclosure" description={`How ${SITE.name} uses affiliate links and advertising.`}>
+  <Breadcrumbs items={[{ name: 'Affiliate disclosure', href: '/affiliate-disclosure/' }]} />
+  <article class="prose">
+    <h1>Affiliate disclosure</h1>
+    <p>
+      Some links on {SITE.name} are affiliate links. If you click one and later make a purchase, we may receive a
+      commission from the vendor. This costs you nothing extra.
+    </p>
+    <p>
+      Affiliate links are labelled next to the button on tool pages and are marked <code>rel="sponsored"</code> in the
+      page code. Tools without an affiliate programme are listed on the same terms as those with one, and compensation
+      does not change our assessment of a product.
+    </p>
+    <p>The site also displays third-party advertising, which is labelled "Advertisement".</p>
+  </article>
+</Base>
